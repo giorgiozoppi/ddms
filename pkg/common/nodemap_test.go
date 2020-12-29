@@ -8,12 +8,13 @@ import (
 func TestNodeMap(t *testing.T) {
 	nodeMap:= NewNodeMap()
 	randomId,_:=NewRandomID()
-	t.Run("should insert a node in a map", func(t *testing.T) {
 
+	t.Run("should insert a node in a map", func(t *testing.T) {
 		nodeMap.Put(*randomId, 10)
-		value, errValue:= nodeMap.Get(*randomId)
-		require.NoError(t, errValue)
-		require.Equal(t, 10, value)
+		value, _:= nodeMap.Get(*randomId)
+		intValue:=value.(int)
+		require.Equal(t, 10,intValue)
+
 	})
 	t.Run("should remove a id in a map", func(t *testing.T) {
 		_, errorType:=nodeMap.Remove(*randomId)

@@ -79,10 +79,8 @@ func (node HashNode) CompareTo(o Comparable) int {
 // NewNodeList creates a new node list
 func NewNodeList(key ID, value interface{}) *NodeList {
 	var list NodeList
-	head, _ := NewHashNode(key, value)
-	head.Next = nil
-	list.head = head
-	list.items = 0
+	list.head = nil
+	list.Insert(key, value)
 	return &list
 }
 
@@ -138,7 +136,7 @@ func (list NodeList) searchKey(key ID) (*HashNode, *HashNode,error){
 	var current *HashNode
 	prev = nil
 	found := false
-	for current=list.head; current.Next!=nil; {
+	for current=list.head; current!=nil && !found; {
 		if bytes.Compare(current.Key.Value, key.Value) == 0 {
 			found = true
 			break
@@ -164,7 +162,11 @@ func (list *NodeList) Remove(key ID) (*HashNode, error) {
 		list.head = nil
 		return node, nil
 	} else {
-		prev.Next = node.Next
+		if node!=nil {
+			prev.Next = node.Next
+		} else {
+			prev.Next = nil
+		}
 	}
 	return node, errorSearch
 }

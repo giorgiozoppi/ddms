@@ -6,7 +6,7 @@ import (
 )
 
 // MaxBuckets is the maximum number of buckets in the hashmap
-const MaxBuckets = uint64(128 * 1024)
+const MaxBuckets = uint64(1024)
 
 // NodeMap is an hashtable of ID, Values
 type NodeMap struct {
@@ -43,7 +43,7 @@ func (node *NodeMap) Put(key ID, value interface{}) error {
 }
 
 // Get puts a value into the hashtable
-func (node *NodeMap) Get(key ID) (*interface{}, error) {
+func (node *NodeMap) Get(key ID) (interface{}, error) {
 	item, errorItem := NewHashKey(key)
 	if errorItem != nil {
 		return nil, errorItem
@@ -53,7 +53,7 @@ func (node *NodeMap) Get(key ID) (*interface{}, error) {
 	if current == nil {
 		return nil, errorFind
 	}
-	return &current.Value, errorFind
+	return current.Value, errorFind
 }
 
 // Remove removes the value from the hashtable
