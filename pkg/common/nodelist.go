@@ -4,20 +4,13 @@ import (
 	"bytes"
 	"crypto/rand"
 	"errors"
-	"sync"
-
 	"github.com/minio/highwayhash"
+	"sync"
 )
 
 // ID is a unique node identifier
 type ID struct {
 	Value []byte
-}
-
-// ValueInfo is a list of values
-type ValueInfo struct {
-	Key   ID
-	Value interface{}
 }
 
 // NewRandomID generate a random id for the table
@@ -45,22 +38,33 @@ type NodeList struct {
 type HashNode struct {
 	Hash  uint64
 	Key   ID
-	Value ValueInfo
+	Value interface{}
 	Next  *HashNode
 }
 
 // NewHashNode is the factory method for a hash node
-func NewHashNode(key ID, value ValueInfo) (*HashNode, error) {
+func NewHashNode(key ID, value interface{}) (*HashNode, error) {
 	hash, err := highwayhash.New64(key.Value)
 	if err != nil {
 		return nil, err
 	}
 	hashValue := hash.Sum64()
-	value.Key = key
 	return &HashNode{
 		Hash:  hashValue,
 		Key:   key,
 		Value: value,
+		Next:  nil,
+	}, nil
+}
+func NewHashKey(key ID) (*HashNode, error) {
+	hash, err := highwayhash.New64(key.Value)
+	if err != nil {
+		return nil, err
+	}
+	hashValue := hash.Sum64()
+	return &HashNode{
+		Hash:  hashValue,
+		Key:   key,
 		Next:  nil,
 	}, nil
 }
@@ -72,20 +76,25 @@ func (node *HashNode) CompareTo(o Comparable) int {
 }
 
 // NewNodeList creates a new node list
-func NewNodeList(key ID, value ValueInfo) *NodeList {
+func NewNodeList(key ID, value interface{}) *NodeList {
 	var list NodeList
 	head, _ := NewHashNode(key, value)
+	head.Next = nil
 	list.head = head
 	return &list
 }
 
 // Insert a key and value inside the list
-func (list *NodeList) Insert(key ID, value ValueInfo) (*HashNode, error) {
+func (list *NodeList) Insert(key ID, value interface{}) (*HashNode, error) {
 	list.listMutex.Lock()
 	defer list.listMutex.Unlock()
+	var prev *HashNode
 	nodeCandidate, errCreation := NewHashNode(key, value)
+	if errCreation!=nil {
+		return nil, errCreation
+	}
 	current := list.head
-	prev := list.head
+	prev = nil
 
 	for {
 		if current == nil {
@@ -103,10 +112,15 @@ func (list *NodeList) Insert(key ID, value ValueInfo) (*HashNode, error) {
 	return nodeCandidate, nil
 }
 
-// Search a key in a node returns the previuos node
-func (list *NodeList) Search(key ID) (*HashNode, error) {
+// Search a key in a node returns the previous node
+func (list *NodeList) Search(key ID) (*HashNode,error) {
+   node, _, errorSearch := list.searchKey(key)
+   return node, errorSearch
+}
+func (list *NodeList) searchKey(key ID) (*HashNode, *HashNode,error){
+	var prev *HashNode
 	current := list.head
-	prev := list.head
+	prev = nil
 	found := false
 	for {
 		if current == nil {
@@ -121,33 +135,35 @@ func (list *NodeList) Search(key ID) (*HashNode, error) {
 		current = current.Next
 	}
 	if !found {
-		return nil, errors.New("error not found")
+		return nil,nil, errors.New("error not found")
 	}
-	return current, nil
+	return current, prev, nil
 }
 
 // Remove an element from the list
 func (list *NodeList) Remove(key ID) (*HashNode, error) {
 	list.listMutex.Lock()
 	defer list.listMutex.Unlock()
-	current := list.head
-	prev := list.head
-	found := false
-	for {
-		if current == nil {
-			break
-		}
-		if bytes.Compare(current.Key.Value, key.Value) == 0 {
-			// we have found the node.
-			found = true
-			break
-		}
-		prev = current
-		current = current.Next
+	node, prev, errorSearch := list.searchKey(key)
+	if errorSearch != nil {
+		return nil, errorSearch
 	}
-	if !found {
-		return nil, errors.New("error not found")
+	if node!=nil && prev !=nil {
+		prev.Next = node.Next
 	}
-	prev.Next = current.Next
-	return current, nil
+	return node, errorSearch
+}
+func (list *NodeList) Iterator(abort <-chan struct{}) <-chan HashNode {
+	ch := make(chan HashNode)
+	go func() {
+		defer close(ch)
+		for ptr := list.head; ptr != nil; ptr=ptr.Next {
+			select {
+			case ch <- *ptr:
+			case <-abort: // receive on closed channel can proceed immediately
+				return
+			}
+		}
+	}()
+	return ch
 }

@@ -1,7 +1,6 @@
 package common
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -27,7 +26,7 @@ func NewNodeMap() *NodeMap {
 }
 
 // Put puts a value into the hashtable
-func (node *NodeMap) Put(key ID, value ValueInfo) error {
+func (node *NodeMap) Put(key ID, value interface{}) error {
 	item, errorItem := NewHashNode(key, value)
 	if errorItem != nil {
 		return errorItem
@@ -38,8 +37,8 @@ func (node *NodeMap) Put(key ID, value ValueInfo) error {
 }
 
 // Get puts a value into the hashtable
-func (node *NodeMap) Get(key ID) (*ValueInfo, error) {
-	item, errorItem := NewHashNode(key, ValueInfo{})
+func (node *NodeMap) Get(key ID) (*interface{}, error) {
+	item, errorItem := NewHashKey(key)
 	if errorItem != nil {
 		return nil, errorItem
 	}
@@ -50,19 +49,19 @@ func (node *NodeMap) Get(key ID) (*ValueInfo, error) {
 	}
 	return &current.Value, errorFind
 }
-
+/*
 // Remove removes the value from the hashtable
-func (node *NodeMap) Remove(key ID) (*ValueInfo, error) {
+func (node *NodeMap) Remove(key ID) (interface{}, error) {
 	node.mapMutex.Lock()
 	defer node.mapMutex.Unlock()
-	item, errorItem := NewHashNode(key, ValueInfo{})
+	item, errorItem := NewHashNode(key, interface{})
 	if errorItem != nil {
 		return nil, errorItem
 	}
 	bucketIndex := item.Hash % MaxBuckets
-	removeNode, _, errorFind := node.entries[bucketIndex].Remove(key)
+	removeNode, errorFind := node.entries[bucketIndex].Remove(key)
 	if removeNode == nil {
 		return nil, errors.New("key not found")
 	}
 	return &removeNode.Value, errorFind
-}
+} */
