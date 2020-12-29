@@ -2,7 +2,7 @@ package common
 
 import (
 	"bytes"
-	"crypto/rand"
+	rand "crypto/rand"
 	"errors"
 	"github.com/minio/highwayhash"
 	"sync"
@@ -32,6 +32,7 @@ func NewRandomID() (*ID, error) {
 type NodeList struct {
 	head      *HashNode
 	listMutex sync.Mutex
+	items     uint64
 }
 
 // HashNode is a node containing a key and value
@@ -70,7 +71,7 @@ func NewHashKey(key ID) (*HashNode, error) {
 }
 
 // CompareTo compares an hash node to another node
-func (node *HashNode) CompareTo(o Comparable) int {
+func (node HashNode) CompareTo(o Comparable) int {
 	tmp := o.(*HashNode)
 	return bytes.Compare(node.Key.Value, tmp.Key.Value)
 }
@@ -81,6 +82,7 @@ func NewNodeList(key ID, value interface{}) *NodeList {
 	head, _ := NewHashNode(key, value)
 	head.Next = nil
 	list.head = head
+	list.items = 0
 	return &list
 }
 
@@ -89,17 +91,18 @@ func (list *NodeList) Insert(key ID, value interface{}) (*HashNode, error) {
 	list.listMutex.Lock()
 	defer list.listMutex.Unlock()
 	var prev *HashNode
+	var current *HashNode
 	nodeCandidate, errCreation := NewHashNode(key, value)
 	if errCreation!=nil {
 		return nil, errCreation
 	}
-	current := list.head
 	prev = nil
-
-	for {
-		if current == nil {
-			break
-		}
+	// empty list
+	if list.head == nil {
+		list.head = nodeCandidate
+		return nodeCandidate, nil
+	}
+	for current=list.head; current.Next!=nil;  {
 		if current.CompareTo(nodeCandidate) > 0 {
 			// we have found the node.
 			break
@@ -107,8 +110,14 @@ func (list *NodeList) Insert(key ID, value interface{}) (*HashNode, error) {
 		prev = current
 		current = current.Next
 	}
-	prev.Next = nodeCandidate
-	nodeCandidate.Next = current
+	if prev != nil {
+		nodeCandidate.Next = current
+		prev.Next = nodeCandidate
+	} else {
+		list.head = nodeCandidate
+		nodeCandidate.Next = current
+	}
+	list.items =list.items + 1
 	return nodeCandidate, nil
 }
 
@@ -117,17 +126,20 @@ func (list *NodeList) Search(key ID) (*HashNode,error) {
    node, _, errorSearch := list.searchKey(key)
    return node, errorSearch
 }
-func (list *NodeList) searchKey(key ID) (*HashNode, *HashNode,error){
+func (list *NodeList) Clear() {
+	for current:=list.head; current!=nil;  {
+		current.Value = nil
+		current = current.Next
+	}
+	list.head = nil
+}
+func (list NodeList) searchKey(key ID) (*HashNode, *HashNode,error){
 	var prev *HashNode
-	current := list.head
+	var current *HashNode
 	prev = nil
 	found := false
-	for {
-		if current == nil {
-			break
-		}
+	for current=list.head; current.Next!=nil; {
 		if bytes.Compare(current.Key.Value, key.Value) == 0 {
-			// we have found the node.
 			found = true
 			break
 		}
@@ -135,7 +147,7 @@ func (list *NodeList) searchKey(key ID) (*HashNode, *HashNode,error){
 		current = current.Next
 	}
 	if !found {
-		return nil,nil, errors.New("error not found")
+		return nil,nil, errors.New("item not found")
 	}
 	return current, prev, nil
 }
@@ -148,7 +160,10 @@ func (list *NodeList) Remove(key ID) (*HashNode, error) {
 	if errorSearch != nil {
 		return nil, errorSearch
 	}
-	if node!=nil && prev !=nil {
+	if prev == nil {
+		list.head = nil
+		return node, nil
+	} else {
 		prev.Next = node.Next
 	}
 	return node, errorSearch

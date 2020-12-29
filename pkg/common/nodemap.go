@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -32,7 +33,12 @@ func (node *NodeMap) Put(key ID, value interface{}) error {
 		return errorItem
 	}
 	bucketIndex := item.Hash % MaxBuckets
-	_, errorInsert := node.entries[bucketIndex].Insert(key, value)
+	var errorInsert error
+	if node.entries[bucketIndex] == nil {
+		node.entries[bucketIndex] = NewNodeList(key, value)
+	} else {
+		_, errorInsert = node.entries[bucketIndex].Insert(key, value)
+	}
 	return errorInsert
 }
 
@@ -49,12 +55,12 @@ func (node *NodeMap) Get(key ID) (*interface{}, error) {
 	}
 	return &current.Value, errorFind
 }
-/*
+
 // Remove removes the value from the hashtable
 func (node *NodeMap) Remove(key ID) (interface{}, error) {
 	node.mapMutex.Lock()
 	defer node.mapMutex.Unlock()
-	item, errorItem := NewHashNode(key, interface{})
+	item, errorItem := NewHashKey(key)
 	if errorItem != nil {
 		return nil, errorItem
 	}
@@ -64,4 +70,4 @@ func (node *NodeMap) Remove(key ID) (interface{}, error) {
 		return nil, errors.New("key not found")
 	}
 	return &removeNode.Value, errorFind
-} */
+}
