@@ -1,0 +1,50 @@
+syntax = "proto3";
+option go_package = "message";
+
+
+enum MessageType {
+	ReplyMessageType = 0;
+    GetMessageType = 1;
+    PutMessageType = 2;
+    PutValueInfoMessageType = 3;
+    RemoveMessageType = 4;
+    RequestTransferMessageType = 5;
+}
+enum RequestType {
+    Remove = 0;
+    Put = 1;
+}
+
+message ID {
+  repeated bytes Value = 1;
+  uint32 Size = 2;
+  repeated bytes HashCode = 3;
+}
+message GetMessage {
+    repeated ID Keys = 1;
+}
+message PutRequest {
+    RequestType Type = 1;
+    repeated ID ValuesHash = 2;
+    repeated UserData Values = 3;
+}
+message RemoveRequest {
+    RequestType Type = 1;
+    repeated ID ValueHash = 2;  
+    repeated UserData Values = 3;
+}
+message PutMessage {
+    repeated PutRequest Request = 1;
+    uint64 TimeToLive = 2;
+    uint32 ReplicaNumber = 3;
+    repeated bytes HashedSecret = 4;
+}
+message RemoveMessage {
+    repeated RemoveRequest Request = 1;
+    uint64 TimeToLive = 2;
+    uint32 ReplicaNumber = 3;
+    repeated bytes HashedSecret = 4;
+}
+message UserData {
+    repeated bytes Value = 1;
+}

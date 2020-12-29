@@ -1,0 +1,40 @@
+syntax = "proto3";
+package message;
+option go_package = "message";
+import "google/protobuf/timestamp.proto";
+
+enum MessageType {
+	AckMessageType = 0;
+}
+message AckMessage {
+  repeated bytes Value = 1;
+  uint32 Size = 2;
+  repeated bytes HashCode = 3;
+}
+message GetMessage {
+    repeated ID Keys = 1;
+}
+
+message PutMessage {
+    uint64 TimeToLive = 1;
+    uint32 ReplicaNumber = 2;
+    repeated bytes HashedSecret =3;
+}
+message RemoveMessage {
+    uint64 TimeToLive = 1;
+    uint32 ReplicaNumber = 2;
+    repeated bytes HashedSecret =3;
+}
+message UserData {
+    repeated bytes Value = 1;
+}
+message PutRequest {
+    RequestType Type = 1;
+    repeated ID ValuesHash = 2;
+    repeated UserData Values = 3;
+}
+message RemoveRequest {
+    RequestType Type = 1;
+    repeated ID ValueHash = 2;  
+    repeated UserData Values = 3;
+}
