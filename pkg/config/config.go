@@ -1,6 +1,6 @@
 package config
 
-import "github.com/giorgiozoppi/dms/pkg/common"
+import "github.com/giorgiozoppi/ddms/pkg/common"
 
 // NodeType can be of types of nodes: SuperNode and StandardNode
 type NodeType string
