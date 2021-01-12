@@ -1,9 +1,10 @@
 package directory
 
 import (
+	"sync"
+
 	"github.com/golang-collections/collections/set"
 	rocksdb "github.com/tecbot/gorocksdb"
-	"sync"
 )
 
 // RocksDBProvider is a directory provider that uses RocksDB
@@ -27,6 +28,10 @@ type rocksDbMultiValueDirectory struct {
 	configuration Configuration
 }
 
+func (directory *rocksDbMultiValueDirectory) Put(key Key, value ValueInfo) error {
+	return nil
+}
+
 func (directory *rocksDbMultiValueDirectory) Get(key Key) ([]set.Set, error) {
 	data := make([]set.Set, 0)
 	return data, nil
@@ -41,12 +46,14 @@ func (directory *rocksDbMultiValueDirectory) GetSingle(key Key) (ValueInfo, erro
 func (directory *rocksDbMultiValueDirectory) PutSingle(key Key, value ValueInfo) error {
 	return nil
 }
-func (directory *rocksDbMultiValueDirectory) Next() (Key, ValueInfo, error) {
-	return Key{}, ValueInfo{}, nil
+func (directory *rocksDbMultiValueDirectory) Next() chan struct {
+	Key
+	ValueInfo
+} {
+	//queue:=<-chan struct {Key; ValueInfo}{"http:...", 3}
+	return nil
 }
-func (directory *rocksDbMultiValueDirectory) HasNext() bool {
-	return false
-}
+
 func (directory *rocksDbMultiValueDirectory) Close() error {
 	return nil
 }
