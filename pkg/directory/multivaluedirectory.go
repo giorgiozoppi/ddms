@@ -1,6 +1,9 @@
 package directory
 
-import "github.com/golang-collections/collections/set"
+import (
+	"github.com/giorgiozoppi/ddms/pkg/common"
+	"github.com/golang-collections/collections/set"
+)
 
 // MultiValueDirectory maps a multiple value directory
 type MultiValueDirectory interface {
@@ -8,6 +11,6 @@ type MultiValueDirectory interface {
 	Put(key Key, value ValueInfo) error
 	Remove(key Key) ([]set.Set, error)
 	GetSingle(key Key) (ValueInfo, error)
-	Next() chan struct {Key; ValueInfo}
+	Next() chan common.Tuple
 	Close() error
 }

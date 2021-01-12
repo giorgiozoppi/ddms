@@ -39,6 +39,7 @@ type Configuration struct {
 	BackendType StorageType
 }
 
+// NewProvider is a factory method for constructing a new provider.
 func NewProvider(storageType StorageType, fsyncEnabled bool) (Provider, error) {
 	switch storageType {
 	case RocksDbStorage:

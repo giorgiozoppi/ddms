@@ -3,6 +3,7 @@ package directory
 import (
 	"sync"
 
+	"github.com/giorgiozoppi/ddms/pkg/common"
 	"github.com/golang-collections/collections/set"
 	rocksdb "github.com/tecbot/gorocksdb"
 )
@@ -46,10 +47,7 @@ func (directory *rocksDbMultiValueDirectory) GetSingle(key Key) (ValueInfo, erro
 func (directory *rocksDbMultiValueDirectory) PutSingle(key Key, value ValueInfo) error {
 	return nil
 }
-func (directory *rocksDbMultiValueDirectory) Next() chan struct {
-	Key
-	ValueInfo
-} {
+func (directory *rocksDbMultiValueDirectory) Next() chan common.Tuple {
 	//queue:=<-chan struct {Key; ValueInfo}{"http:...", 3}
 	return nil
 }
