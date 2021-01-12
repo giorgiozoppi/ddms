@@ -4,8 +4,9 @@ import (
 	"bytes"
 	rand "crypto/rand"
 	"errors"
-	"github.com/minio/highwayhash"
 	"sync"
+
+	"github.com/minio/highwayhash"
 )
 
 // ID is a unique node identifier
@@ -64,9 +65,9 @@ func NewHashKey(key ID) (*HashNode, error) {
 	}
 	hashValue := hash.Sum64()
 	return &HashNode{
-		Hash:  hashValue,
-		Key:   key,
-		Next:  nil,
+		Hash: hashValue,
+		Key:  key,
+		Next: nil,
 	}, nil
 }
 
@@ -91,7 +92,7 @@ func (list *NodeList) Insert(key ID, value interface{}) (*HashNode, error) {
 	var prev *HashNode
 	var current *HashNode
 	nodeCandidate, errCreation := NewHashNode(key, value)
-	if errCreation!=nil {
+	if errCreation != nil {
 		return nil, errCreation
 	}
 	prev = nil
@@ -100,7 +101,7 @@ func (list *NodeList) Insert(key ID, value interface{}) (*HashNode, error) {
 		list.head = nodeCandidate
 		return nodeCandidate, nil
 	}
-	for current=list.head; current.Next!=nil;  {
+	for current = list.head; current.Next != nil; {
 		if current.CompareTo(nodeCandidate) > 0 {
 			// we have found the node.
 			break
@@ -115,28 +116,28 @@ func (list *NodeList) Insert(key ID, value interface{}) (*HashNode, error) {
 		list.head = nodeCandidate
 		nodeCandidate.Next = current
 	}
-	list.items =list.items + 1
+	list.items = list.items + 1
 	return nodeCandidate, nil
 }
 
 // Search a key in a node returns the previous node
-func (list *NodeList) Search(key ID) (*HashNode,error) {
-   node, _, errorSearch := list.searchKey(key)
-   return node, errorSearch
+func (list *NodeList) Search(key ID) (*HashNode, error) {
+	node, _, errorSearch := list.searchKey(key)
+	return node, errorSearch
 }
 func (list *NodeList) Clear() {
-	for current:=list.head; current!=nil;  {
+	for current := list.head; current != nil; {
 		current.Value = nil
 		current = current.Next
 	}
 	list.head = nil
 }
-func (list NodeList) searchKey(key ID) (*HashNode, *HashNode,error){
+func (list NodeList) searchKey(key ID) (*HashNode, *HashNode, error) {
 	var prev *HashNode
 	var current *HashNode
 	prev = nil
 	found := false
-	for current=list.head; current!=nil && !found; {
+	for current = list.head; current != nil && !found; {
 		if bytes.Compare(current.Key.Value, key.Value) == 0 {
 			found = true
 			break
@@ -145,7 +146,7 @@ func (list NodeList) searchKey(key ID) (*HashNode, *HashNode,error){
 		current = current.Next
 	}
 	if !found {
-		return nil,nil, errors.New("item not found")
+		return nil, nil, errors.New("item not found")
 	}
 	return current, prev, nil
 }
@@ -162,7 +163,7 @@ func (list *NodeList) Remove(key ID) (*HashNode, error) {
 		list.head = nil
 		return node, nil
 	} else {
-		if node!=nil {
+		if node != nil {
 			prev.Next = node.Next
 		} else {
 			prev.Next = nil
@@ -174,7 +175,7 @@ func (list *NodeList) Iterator(abort <-chan struct{}) <-chan HashNode {
 	ch := make(chan HashNode)
 	go func() {
 		defer close(ch)
-		for ptr := list.head; ptr != nil; ptr=ptr.Next {
+		for ptr := list.head; ptr != nil; ptr = ptr.Next {
 			select {
 			case ch <- *ptr:
 			case <-abort: // receive on closed channel can proceed immediately
