@@ -36,7 +36,6 @@ func Execute() {
 	}
 }
 func init() {
-	cobra.OnInitialize(initConfig)
 	rootFlags := rootCmd.PersistentFlags()
 	rootFlags.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ddms)")
 	rootFlags.StringP("local-peer-address", "l", "127.0.0.0", "local address for listening messages")
@@ -45,6 +44,7 @@ func init() {
 	rootFlags.Int16P("server-port", "z", 15000, "local port for listening messages")
 	rootFlags.BoolP("super-node", "s", false, "set the peer as standalone supernode")
 	rootFlags.Int32P("swim-timeout", "t", 15000, "local port for listening messages")
+	initConfig()
 }
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
@@ -62,14 +62,11 @@ func initConfig() {
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".ddms")
 	}
-	viper.SetConfigName("ddms")
-	viper.SetConfigType("env")
-	viper.AutomaticEnv()
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	} else {
-		fmt.Println(" config file not found ")
+		fmt.Printf(" config file not found ")
 		os.Exit(1)
 	}
 }
