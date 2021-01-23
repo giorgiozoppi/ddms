@@ -1,0 +1,12 @@
+{
+  "node": {
+    "local-peer-address": "localhost",
+    "local-peer-port": 15000,
+    "remote-peer-address": "127.0.0.1",
+    "remote-peer-port": "12000",
+    "supernode": false,
+    "swim-timeout": 15000
+  }
+}
+
+

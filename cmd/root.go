@@ -59,6 +59,7 @@ func initConfig() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		viper.SetConfigType("json")
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".ddms")
 	}
