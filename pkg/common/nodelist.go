@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	rand "crypto/rand"
+	sha256 "crypto/sha256"
 	"errors"
 	"sync"
 
@@ -14,18 +15,33 @@ type ID struct {
 	Value []byte
 }
 
+func NewID() (error, *ID) {
+	entropy := make([]byte, 1024)
+	_, err := rand.Read(entropy)
+	if err != nil {
+		return err, nil
+	}
+	hash := sha256.Sum256(entropy)
+	data := make([]byte, 32)
+	copy32(hash, data)
+	return nil, &ID{
+		Value: data,
+	}
+}
+
 // NewRandomID generate a random id for the table
 func NewRandomID() (*ID, error) {
-	data := make([]byte, 32)
-	read, err := rand.Read(data)
+	data := make([]byte, 256)
+	_, err := rand.Read(data)
 	if err != nil {
 		return nil, err
 	}
-	if read != 32 {
-		return nil, errors.New("no so much entropy")
-	}
+	hash := sha256.Sum256(data)
+	id := make([]byte, 32)
+	copy32(hash, id)
+
 	return &ID{
-		Value: data,
+		Value: id,
 	}, nil
 }
 
@@ -58,6 +74,8 @@ func NewHashNode(key ID, value interface{}) (*HashNode, error) {
 		Next:  nil,
 	}, nil
 }
+
+// NewHashKey creates a hash with a key.
 func NewHashKey(key ID) (*HashNode, error) {
 	hash, err := highwayhash.New64(key.Value)
 	if err != nil {
@@ -77,11 +95,18 @@ func (node HashNode) CompareTo(o Comparable) int {
 	return bytes.Compare(node.Key.Value, tmp.Key.Value)
 }
 
+func NewEmptyList() *NodeList {
+	return &NodeList{
+		head: nil,
+	}
+
+}
+
 // NewNodeList creates a new node list
 func NewNodeList(key ID, value interface{}) *NodeList {
 	var list NodeList
 	list.head = nil
-	list.Insert(key, value)
+	_, _ = list.Insert(key, value)
 	return &list
 }
 
@@ -132,7 +157,7 @@ func (list *NodeList) Clear() {
 	}
 	list.head = nil
 }
-func (list NodeList) searchKey(key ID) (*HashNode, *HashNode, error) {
+func (list *NodeList) searchKey(key ID) (*HashNode, *HashNode, error) {
 	var prev *HashNode
 	var current *HashNode
 	prev = nil
@@ -184,4 +209,9 @@ func (list *NodeList) Iterator(abort <-chan struct{}) <-chan HashNode {
 		}
 	}()
 	return ch
+}
+func copy32(src [32]byte, dest []byte) {
+	for j := 0; j < 32; j++ {
+		dest[j] = src[j]
+	}
 }

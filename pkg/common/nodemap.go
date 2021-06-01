@@ -28,6 +28,8 @@ func NewNodeMap() *NodeMap {
 
 // Put puts a value into the hashtable
 func (node *NodeMap) Put(key ID, value interface{}) error {
+	node.mapMutex.Lock()
+	defer node.mapMutex.Unlock()
 	item, errorItem := NewHashNode(key, value)
 	if errorItem != nil {
 		return errorItem
