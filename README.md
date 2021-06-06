@@ -1,2 +1,2 @@
 # go-p2p
-An experimental peer to peer project. Very VIP
+An experimental peer to peer project. Very WIP
